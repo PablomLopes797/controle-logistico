@@ -86,4 +86,17 @@ describe("logistics.agenda.import", () => {
     expect(fetchMock.mock.calls.map(([, init]) => init?.method ?? "GET")).toEqual(["POST", "GET"]);
     fetchMock.mockRestore();
   });
+
+  it("applies start and end dates before returning dashboard analytics", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify([
+      { SENHA: "S-001", "DATA AGENDA": "18/08/2026", "HORA AGENDA": "08:00", CATEGORIA: "Mercearia", "QTD DE PALETES": "3", "STATUS DE RUPTURA": "" },
+      { SENHA: "S-002", "DATA AGENDA": "19/08/2026", "HORA AGENDA": "14:00", CATEGORIA: "Frios", "QTD DE PALETES": "5", "STATUS DE RUPTURA": "SIM" },
+    ]), { status: 200, headers: { "Content-Type": "application/json" } }));
+
+    const dashboard = await appRouter.createCaller(await authenticatedContext()).logistics.reception.dashboard({ startDate: "2026-08-19", endDate: "2026-08-19" });
+
+    expect(dashboard.totals).toEqual({ vehicles: 1, pallets: 5, ruptureItems: 1, ruptureVehicles: 1 });
+    expect(dashboard.vehiclesByDay).toEqual([{ label: "19/08/2026", value: 1 }]);
+    fetchMock.mockRestore();
+  });
 });

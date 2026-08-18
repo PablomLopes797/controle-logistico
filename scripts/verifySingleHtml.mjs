@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 const filePath = resolve("dist/public/index.html");
 const html = await readFile(filePath, "utf8");
-const requiredInterfaceMarkers = ["Programação de agenda", "Enviar ao Supabase", "Controle Logístico"];
+const requiredInterfaceMarkers = ["Programação de agenda", "Enviar ao Supabase", "Controle Logístico", "Filtros globais", "Veículos por hora", "Paletes por turno"];
 
 for (const marker of requiredInterfaceMarkers) {
   if (!html.includes(marker)) throw new Error(`A interface consolidada não contém o marcador obrigatório: ${marker}`);

@@ -46,10 +46,17 @@ function asText(value: unknown) {
   return String(value).trim();
 }
 
+function asBrazilianDate(value: unknown) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${String(value.getDate()).padStart(2, "0")}/${String(value.getMonth() + 1).padStart(2, "0")}/${value.getFullYear()}`;
+  }
+  return asText(value);
+}
+
 function mapRecord(row: unknown[]): AgendaImportRecord {
   return {
     senha: asText(row[COLUMN_INDEX.senha]),
-    dataAgenda: asText(row[COLUMN_INDEX.dataAgenda]),
+    dataAgenda: asBrazilianDate(row[COLUMN_INDEX.dataAgenda]),
     horaAgenda: asText(row[COLUMN_INDEX.horaAgenda]),
     fornecedor: asText(row[COLUMN_INDEX.fornecedor]),
     plu: asText(row[COLUMN_INDEX.plu]),
@@ -71,7 +78,7 @@ export function parseAgendaWorkbook(workbook: XLSX.WorkBook): AgendaImportPrevie
   const allRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
     header: 1,
     defval: "",
-    raw: false,
+    raw: true,
   });
   const rows = allRows.slice(6);
   const records: AgendaImportRecord[] = [];
@@ -105,5 +112,5 @@ export function parseAgendaWorkbook(workbook: XLSX.WorkBook): AgendaImportPrevie
 
 export async function parseAgendaFile(file: File) {
   const buffer = await file.arrayBuffer();
-  return parseAgendaWorkbook(XLSX.read(buffer, { type: "array", cellDates: false }));
+  return parseAgendaWorkbook(XLSX.read(buffer, { type: "array", cellDates: true }));
 }

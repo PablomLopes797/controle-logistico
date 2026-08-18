@@ -41,8 +41,8 @@ describe("buildReceptionDashboard", () => {
       { label: "19/08/2026", value: 1 },
     ]);
     expect(dashboard.palletsByShift).toEqual([
-      { label: "Manhã", value: 15 },
-      { label: "Tarde", value: 7 },
+      { label: "1º Turno", value: 15 },
+      { label: "2º Turno", value: 7 },
     ]);
     expect(dashboard.ruptureVehiclesByDay).toEqual([
       { label: "18/08/2026", value: 1 },

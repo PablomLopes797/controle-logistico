@@ -1,18 +1,20 @@
 import type { AgendaRecRow } from "./supabase";
 
-type ChartPoint = { label: string; value: number };
+export type ChartPoint = { label: string; value: number };
+export type WeekdayShiftPoint = ChartPoint & { weekday: string; shift: string };
+
+export type ReceptionDashboardFilters = {
+  startDate?: string;
+  endDate?: string;
+};
 
 export type ReceptionDashboard = {
-  totals: {
-    vehicles: number;
-    pallets: number;
-    ruptureItems: number;
-    ruptureVehicles: number;
-  };
+  totals: { vehicles: number; pallets: number; ruptureItems: number; ruptureVehicles: number };
+  dateRange: { min: string | null; max: string | null; daysInPeriod: number };
   vehiclesByDay: ChartPoint[];
   vehiclesByCategory: ChartPoint[];
   vehiclesByHour: ChartPoint[];
-  vehiclesByWeekdayAndShift: ChartPoint[];
+  vehiclesByWeekdayAndShift: WeekdayShiftPoint[];
   palletsByHour: ChartPoint[];
   palletsByShift: ChartPoint[];
   palletsByDay: ChartPoint[];
@@ -23,29 +25,53 @@ export type ReceptionDashboard = {
 
 type NormalizedAgenda = {
   senha: string;
-  dataAgenda: string;
-  horaAgenda: string;
+  dateKey: string | null;
+  dateLabel: string;
+  hour: number | null;
   categoria: string;
   pallets: number;
   rupture: boolean;
 };
 
 const weekdayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const shiftLabels = ["1º Turno", "2º Turno", "3º Turno", "Não informado"];
 
-function text(value: unknown) {
-  return String(value ?? "").trim();
-}
+function text(value: unknown) { return String(value ?? "").trim(); }
 
 function number(value: unknown) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   const content = text(value).replace(/R\$\s?/g, "").replace(/\s/g, "");
   if (!content) return 0;
-  const normalized = content.includes(",")
-    ? content.replace(/\./g, "").replace(",", ".")
-    : content.replace(/[^\d.-]/g, "");
+  const normalized = content.includes(",") ? content.replace(/\./g, "").replace(",", ".") : content.replace(/[^\d.-]/g, "");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }
+
+function localDate(year: number, month: number, day: number) {
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null;
+}
+
+function parseAgendaDate(value: unknown) {
+  const content = text(value);
+  const parts = content.match(/^(\d{1,4})[\/-](\d{1,2})[\/-](\d{1,4})/);
+  if (parts) {
+    let first = Number(parts[1]);
+    let second = Number(parts[2]);
+    let year = Number(parts[3]);
+    if (year < 100) year += 2000;
+    let day = first;
+    let month = second;
+    if (first <= 12 && second > 12) { month = first; day = second; }
+    if (parts[1].length === 4) { year = first; month = second; day = Number(parts[3]); }
+    return localDate(year, month, day);
+  }
+  const date = new Date(content);
+  return Number.isNaN(date.getTime()) ? null : localDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+function dateKey(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
+function dateLabel(date: Date) { return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`; }
 
 function getHour(value: string) {
   const match = value.match(/(\d{1,2})/);
@@ -53,67 +79,66 @@ function getHour(value: string) {
   return parsed >= 0 && parsed <= 23 ? parsed : null;
 }
 
-function shiftForHour(hour: number | null) {
+export function shiftForHour(hour: number | null) {
   if (hour === null) return "Não informado";
-  if (hour >= 6 && hour < 14) return "Manhã";
-  if (hour >= 14 && hour < 22) return "Tarde";
-  return "Noite";
-}
-
-function weekdayForDate(value: string) {
-  const brazilian = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  const date = brazilian
-    ? new Date(Number(brazilian[3]), Number(brazilian[2]) - 1, Number(brazilian[1]))
-    : new Date(value);
-  return Number.isNaN(date.getTime()) ? "Sem data" : weekdayLabels[date.getDay()]!;
+  if (hour >= 6 && hour < 14) return "1º Turno";
+  if (hour >= 14 && hour < 22) return "2º Turno";
+  return "3º Turno";
 }
 
 function isRupture(value: unknown) {
-  const normalized = text(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase();
+  const normalized = text(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
   return !["", "0", "N", "NAO", "FALSE", "SEM RUPTURA", "NAO APLICAVEL"].includes(normalized);
 }
 
 function normalize(row: AgendaRecRow): NormalizedAgenda {
+  const date = parseAgendaDate(row["DATA AGENDA"]);
   return {
     senha: text(row.SENHA) || "Sem senha",
-    dataAgenda: text(row["DATA AGENDA"]) || "Sem data",
-    horaAgenda: text(row["HORA AGENDA"]),
+    dateKey: date ? dateKey(date) : null,
+    dateLabel: date ? dateLabel(date) : "Sem data",
+    hour: getHour(text(row["HORA AGENDA"])),
     categoria: text(row.CATEGORIA) || "Não informado",
     pallets: number(row["QTD DE PALETES"]),
     rupture: isRupture(row["STATUS DE RUPTURA"]),
   };
 }
 
-function mapToPoints(map: Map<string, number>) {
-  return Array.from(map.entries())
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true }));
+function add(map: Map<string, number>, label: string, value = 1) { map.set(label, (map.get(label) ?? 0) + value); }
+function addDistinct(map: Map<string, Set<string>>, label: string, id: string) { const ids = map.get(label) ?? new Set<string>(); ids.add(id); map.set(label, ids); }
+function naturalPoints(map: Map<string, number>) { return Array.from(map.entries()).map(([label, value]) => ({ label, value })).sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { numeric: true })); }
+function distinctPoints(map: Map<string, Set<string>>) { return naturalPoints(new Map(Array.from(map.entries()).map(([label, ids]) => [label, ids.size]))); }
+function datePoints(map: Map<string, number>) { return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => ({ label: key === "sem-data" ? "Sem data" : dateLabel(localDate(Number(key.slice(0, 4)), Number(key.slice(5, 7)), Number(key.slice(8, 10)))!), value })); }
+function average(value: number, divisor: number) { return divisor > 0 ? Number((value / divisor).toFixed(2)) : 0; }
+
+function periodDays(records: NormalizedAgenda[], filters: ReceptionDashboardFilters) {
+  const start = filters.startDate ? parseAgendaDate(filters.startDate) : null;
+  const end = filters.endDate ? parseAgendaDate(filters.endDate) : null;
+  if (start && end) return Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1);
+  return Math.max(1, new Set(records.flatMap(record => record.dateKey ? [record.dateKey] : [])).size);
 }
 
-function add(map: Map<string, number>, label: string, value = 1) {
-  map.set(label, (map.get(label) ?? 0) + value);
+function weekdayPeriodDays(records: NormalizedAgenda[], filters: ReceptionDashboardFilters, weekday: string) {
+  const start = filters.startDate ? parseAgendaDate(filters.startDate) : null;
+  const end = filters.endDate ? parseAgendaDate(filters.endDate) : null;
+  if (start && end) {
+    let count = 0;
+    for (let current = new Date(start); current <= end; current.setDate(current.getDate() + 1)) if (weekdayLabels[current.getDay()] === weekday) count += 1;
+    return Math.max(1, count);
+  }
+  return Math.max(1, new Set(records.filter(record => record.dateKey && weekdayLabels[parseAgendaDate(record.dateKey)?.getDay() ?? -1] === weekday).map(record => record.dateKey)).size);
 }
 
-function addDistinct(map: Map<string, Set<string>>, label: string, id: string) {
-  const values = map.get(label) ?? new Set<string>();
-  values.add(id);
-  map.set(label, values);
-}
-
-function distinctPoints(map: Map<string, Set<string>>) {
-  return mapToPoints(new Map(Array.from(map.entries()).map(([label, ids]) => [label, ids.size])));
-}
-
-export function buildReceptionDashboard(rows: AgendaRecRow[]): ReceptionDashboard {
-  const records = rows.map(normalize);
+export function buildReceptionDashboard(rows: AgendaRecRow[], filters: ReceptionDashboardFilters = {}): ReceptionDashboard {
+  const startKey = filters.startDate ? dateKey(parseAgendaDate(filters.startDate)!) : undefined;
+  const endKey = filters.endDate ? dateKey(parseAgendaDate(filters.endDate)!) : undefined;
+  const records = rows.map(normalize).filter(record => (!startKey || (record.dateKey && record.dateKey >= startKey)) && (!endKey || (record.dateKey && record.dateKey <= endKey)));
+  const daysInPeriod = periodDays(records, filters);
   const vehiclesByDay = new Map<string, Set<string>>();
   const vehiclesByCategory = new Map<string, Set<string>>();
-  const vehiclesByHour = new Map<string, Set<string>>();
-  const vehiclesByWeekdayAndShift = new Map<string, Set<string>>();
-  const palletsByHour = new Map<string, number>();
+  const hourlyVehicles = new Map<string, Set<string>>();
+  const hourlyPallets = new Map<string, number>();
+  const weekdayShiftVehicles = new Map<string, Set<string>>();
   const palletsByShift = new Map<string, number>();
   const palletsByDay = new Map<string, number>();
   const palletsByCategory = new Map<string, number>();
@@ -124,47 +149,59 @@ export function buildReceptionDashboard(rows: AgendaRecRow[]): ReceptionDashboar
   let totalPallets = 0;
   let ruptureItems = 0;
 
-  records.forEach(record => {
-    const hour = getHour(record.horaAgenda);
-    const hourLabel = hour === null ? "Não informado" : `${String(hour).padStart(2, "0")}:00`;
-    const shift = shiftForHour(hour);
-    const weekdayShift = `${weekdayForDate(record.dataAgenda)} · ${shift}`;
-
+  for (const record of records) {
+    const hourLabel = record.hour === null ? "Não informado" : `${String(record.hour).padStart(2, "0")}:00`;
+    const shift = shiftForHour(record.hour);
+    const dayKey = record.dateKey ?? "sem-data";
+    const weekday = record.dateKey ? weekdayLabels[parseAgendaDate(record.dateKey)?.getDay() ?? 0]! : "Sem data";
     allVehicles.add(record.senha);
-    addDistinct(vehiclesByDay, record.dataAgenda, record.senha);
+    addDistinct(vehiclesByDay, dayKey, record.senha);
     addDistinct(vehiclesByCategory, record.categoria, record.senha);
-    addDistinct(vehiclesByHour, hourLabel, record.senha);
-    addDistinct(vehiclesByWeekdayAndShift, weekdayShift, record.senha);
-    add(palletsByHour, hourLabel, record.pallets);
+    if (record.dateKey) {
+      addDistinct(hourlyVehicles, `${record.dateKey}|${hourLabel}`, record.senha);
+      add(hourlyPallets, `${record.dateKey}|${hourLabel}`, record.pallets);
+      addDistinct(weekdayShiftVehicles, `${record.dateKey}|${weekday}|${shift}`, record.senha);
+    }
     add(palletsByShift, shift, record.pallets);
-    add(palletsByDay, record.dataAgenda, record.pallets);
+    add(palletsByDay, dayKey, record.pallets);
     add(palletsByCategory, record.categoria, record.pallets);
     totalPallets += record.pallets;
-
     if (record.rupture) {
       ruptureItems += 1;
       ruptureVehicles.add(record.senha);
-      add(ruptureItemsByDay, record.dataAgenda);
-      addDistinct(ruptureVehiclesByDay, record.dataAgenda, record.senha);
+      add(ruptureItemsByDay, dayKey);
+      addDistinct(ruptureVehiclesByDay, dayKey, record.senha);
     }
-  });
+  }
 
+  const hourVehicleTotals = new Map<string, number>();
+  for (const [key, ids] of Array.from(hourlyVehicles.entries())) add(hourVehicleTotals, key.split("|")[1]!, ids.size);
+  const hourPalletTotals = new Map<string, number>();
+  for (const [key, value] of Array.from(hourlyPallets.entries())) add(hourPalletTotals, key.split("|")[1]!, value);
+  const weekly: WeekdayShiftPoint[] = [];
+  const weeklyTotals = new Map<string, number>();
+  for (const [key, ids] of Array.from(weekdayShiftVehicles.entries())) {
+    const [, weekday, shift] = key.split("|");
+    add(weeklyTotals, `${weekday}|${shift}`, ids.size);
+  }
+  for (const [key, value] of Array.from(weeklyTotals.entries())) {
+    const [weekday, shift] = key.split("|");
+    weekly.push({ weekday: weekday!, shift: shift!, label: `${weekday} · ${shift}`, value: average(value, weekdayPeriodDays(records, filters, weekday!)) });
+  }
+
+  const dateKeys = records.flatMap(record => record.dateKey ? [record.dateKey] : []).sort();
   return {
-    totals: {
-      vehicles: allVehicles.size,
-      pallets: totalPallets,
-      ruptureItems,
-      ruptureVehicles: ruptureVehicles.size,
-    },
-    vehiclesByDay: distinctPoints(vehiclesByDay),
+    totals: { vehicles: allVehicles.size, pallets: totalPallets, ruptureItems, ruptureVehicles: ruptureVehicles.size },
+    dateRange: { min: dateKeys[0] ?? null, max: dateKeys.at(-1) ?? null, daysInPeriod },
+    vehiclesByDay: datePoints(new Map(Array.from(vehiclesByDay.entries()).map(([key, ids]) => [key, ids.size]))),
     vehiclesByCategory: distinctPoints(vehiclesByCategory),
-    vehiclesByHour: distinctPoints(vehiclesByHour),
-    vehiclesByWeekdayAndShift: distinctPoints(vehiclesByWeekdayAndShift),
-    palletsByHour: mapToPoints(palletsByHour),
-    palletsByShift: mapToPoints(palletsByShift),
-    palletsByDay: mapToPoints(palletsByDay),
-    palletsByCategory: mapToPoints(palletsByCategory),
-    ruptureItemsByDay: mapToPoints(ruptureItemsByDay),
-    ruptureVehiclesByDay: distinctPoints(ruptureVehiclesByDay),
+    vehiclesByHour: naturalPoints(new Map(Array.from(hourVehicleTotals.entries()).map(([label, value]) => [label, average(value, daysInPeriod)]))).sort((a, b) => a.label.localeCompare(b.label)),
+    vehiclesByWeekdayAndShift: weekly.sort((a, b) => weekdayLabels.indexOf(a.weekday) - weekdayLabels.indexOf(b.weekday) || shiftLabels.indexOf(a.shift) - shiftLabels.indexOf(b.shift)),
+    palletsByHour: naturalPoints(new Map(Array.from(hourPalletTotals.entries()).map(([label, value]) => [label, average(value, daysInPeriod)]))).sort((a, b) => a.label.localeCompare(b.label)),
+    palletsByShift: shiftLabels.filter(label => palletsByShift.has(label)).map(label => ({ label, value: palletsByShift.get(label)! })),
+    palletsByDay: datePoints(palletsByDay),
+    palletsByCategory: naturalPoints(palletsByCategory),
+    ruptureItemsByDay: datePoints(ruptureItemsByDay),
+    ruptureVehiclesByDay: datePoints(new Map(Array.from(ruptureVehiclesByDay.entries()).map(([key, ids]) => [key, ids.size]))),
   };
 }

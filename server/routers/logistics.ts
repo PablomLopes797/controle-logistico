@@ -46,6 +46,10 @@ const agendaRecordSchema = z.object({
   statusRuptura: z.string().trim(),
   qtdPaletes: z.string().trim(),
 });
+const dashboardFiltersSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+}).optional();
 
 export const logisticsRouter = router({
   session: publicProcedure.query(async ({ ctx }) => getPerformanceSession(ctx.req)),
@@ -109,10 +113,10 @@ export const logisticsRouter = router({
       }),
   }),
   reception: router({
-    dashboard: publicProcedure.query(async ({ ctx }) => {
+    dashboard: publicProcedure.input(dashboardFiltersSchema).query(async ({ ctx, input }) => {
       await requirePerformanceSession(ctx.req);
       const rows = await listAgendaRecords();
-      return buildReceptionDashboard(rows);
+      return buildReceptionDashboard(rows, input);
     }),
   }),
 });

@@ -41,3 +41,14 @@
 - [x] Cobrir o fluxo encadeado de importação seguida de atualização do dashboard.
 - [x] Registrar evidência automatizada de que o HTML consolidado contém a interface de importação e seu fluxo de confirmação.
 - [x] Extrair e testar a etapa pós-importação quando a atualização do dashboard falhar.
+- [x] Criar filtros globais de data inicial, data final e período que atualizem todos os dashboards.
+- [x] Padronizar todas as datas analíticas e rótulos em dd/mm/aaaa.
+- [x] Ajustar o gráfico de veículos por categoria para colunas com opção de isolar uma categoria por vez.
+- [x] Transformar veículos por hora em média diária do período filtrado e exibir rótulos de dados permanentemente.
+- [x] Adicionar filtros internos de dia da semana e turno ao gráfico de veículos por dia da semana e turno, usando média diária do período.
+- [x] Transformar paletes por hora em média diária do período filtrado e exibir rótulos de dados permanentemente.
+- [x] Aplicar a regra de 1º, 2º e 3º turnos conforme os horários informados.
+- [x] Testar filtros, médias, turnos e formatação brasileira no dashboard atualizado.
+- [x] Testar o procedimento de dashboard com filtros de data e o retorno consumido pelo frontend.
+- [x] Validar os controles de categoria, dia da semana e turno do dashboard atualizado.
+- [ ] Registrar verificação visual autenticada do dashboard com filtros e rótulos persistentes.

@@ -39,4 +39,17 @@ describe("parseAgendaWorkbook", () => {
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([]), "Outra aba");
     expect(() => parseAgendaWorkbook(workbook)).toThrow('aba chamada exatamente "Agendas"');
   });
+
+  it("normalizes a native Excel date in the Brazilian day/month/year format", () => {
+    const preamble = Array.from({ length: 6 }, () => [""]);
+    const row = Array(38).fill("");
+    row[0] = "910";
+    row[3] = "S-200";
+    row[4] = new Date(2026, 7, 18);
+    const worksheet = XLSX.utils.aoa_to_sheet([...preamble, row], { cellDates: true });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Agendas");
+
+    expect(parseAgendaWorkbook(workbook).records[0]?.dataAgenda).toBe("18/08/2026");
+  });
 });
