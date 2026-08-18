@@ -12,7 +12,7 @@ describe("reception dashboard filters and averages", () => {
   it("formats source dates in Brazilian format and calculates daily averages", () => {
     const dashboard = buildReceptionDashboard(records);
     expect(dashboard.vehiclesByDay.map(point => point.label)).toEqual(["18/08/2026", "19/08/2026"]);
-    expect(dashboard.vehiclesByHour).toContainEqual({ label: "08:00", value: 1.5 });
+    expect(dashboard.vehiclesByHour).toContainEqual({ label: "08:00", value: 2 });
     expect(dashboard.palletsByHour).toContainEqual({ label: "08:00", value: 10 });
   });
 
@@ -31,5 +31,13 @@ describe("reception dashboard filters and averages", () => {
     expect(shiftForHour(21)).toBe("2º Turno");
     expect(shiftForHour(22)).toBe("3º Turno");
     expect(buildReceptionDashboard(records).palletsByShift).toContainEqual({ label: "3º Turno", value: 3 });
+  });
+
+  it("groups vehicles by three-letter macro category and retains each agenda day", () => {
+    const dashboard = buildReceptionDashboard(records);
+    expect(dashboard.vehiclesByMacroCategoryAndDay).toEqual([
+      { label: "18/08/2026 · FRI", date: "18/08/2026", macroCategory: "FRI", value: 2 },
+      { label: "19/08/2026 · MER", date: "19/08/2026", macroCategory: "MER", value: 2 },
+    ]);
   });
 });

@@ -7,7 +7,7 @@ describe("DashboardFilterControls", () => {
   it("emits global date and period filters from the rendered controls", () => {
     const onDateChange = vi.fn();
     const onPresetChange = vi.fn();
-    render(<DashboardFilterControls filters={{ startDate: "2026-08-18" }} periodPreset="custom" minDate="2026-08-01" maxDate="2026-08-31" onDateChange={onDateChange} onPresetChange={onPresetChange} onReset={vi.fn()} />);
+    render(<DashboardFilterControls filters={{ startDate: "2026-08-18" }} periodPreset="custom" onDateChange={onDateChange} onPresetChange={onPresetChange} onReset={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText("Data final"), { target: { value: "2026-08-20" } });
     fireEvent.change(screen.getByLabelText("Período pré-definido"), { target: { value: "7" } });

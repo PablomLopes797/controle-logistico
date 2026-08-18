@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterCategory, filterWeekdayShift } from "./dashboardFilters";
+import { filterCategory, filterMacroCategoryByDay, filterWeekdayShift } from "./dashboardFilters";
 
 describe("dashboard internal controls", () => {
   const categories = [{ label: "Frios", value: 4 }, { label: "Mercearia", value: 7 }];
@@ -17,5 +17,13 @@ describe("dashboard internal controls", () => {
   it("combines weekday and shift controls", () => {
     expect(filterWeekdayShift(weekdayShift, "Segunda", "2º Turno")).toEqual([weekdayShift[1]]);
     expect(filterWeekdayShift(weekdayShift, "all", "1º Turno")).toEqual([weekdayShift[0], weekdayShift[2]]);
+  });
+
+  it("filters macro categories while preserving their daily points", () => {
+    const macroPoints = [
+      { label: "18/08/2026 · FRI", date: "18/08/2026", macroCategory: "FRI", value: 2 },
+      { label: "19/08/2026 · MER", date: "19/08/2026", macroCategory: "MER", value: 3 },
+    ];
+    expect(filterMacroCategoryByDay(macroPoints, "FRI")).toEqual([macroPoints[0]]);
   });
 });

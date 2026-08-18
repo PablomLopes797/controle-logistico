@@ -52,3 +52,15 @@
 - [x] Testar o procedimento de dashboard com filtros de data e o retorno consumido pelo frontend.
 - [x] Validar os controles de categoria, dia da semana e turno do dashboard atualizado.
 - [ ] Registrar verificação visual autenticada do dashboard com filtros e rótulos persistentes.
+- [x] Alterar os atalhos de período para faixas futuras a partir da data selecionada, sem limitar as opções a períodos retroativos.
+- [x] Ajustar o gráfico de veículos por dia para exibir todas as datas do intervalo sem ocultar rótulos.
+- [x] Criar categoria macro usando as três primeiras letras da categoria e apresentar veículos por categoria macro e por dia.
+- [x] Calcular veículos por hora a partir do total diário de cada hora e apresentar a média inteira do período.
+- [x] Remover o gráfico de veículos por dia da semana e turno.
+- [x] Calcular paletes por hora a partir dos totais diários de cada hora e apresentar a média inteira do período.
+- [x] Eliminar casas decimais de todos os indicadores e gráficos do dashboard.
+- [x] Testar os novos períodos futuros, categorias macro e médias inteiras antes de salvar a versão atualizada.
+- [x] Usar a data inicial selecionada como referência dos atalhos de período futuro, recorrendo à data atual apenas quando não houver seleção.
+- [x] Testar os atalhos de período futuro com uma data inicial preenchida manualmente.
+- [x] Validar na interface que os atalhos Próximos 7/30 dias usam a data inicial preenchida manualmente.
+- [x] Adicionar teste de interface do atalho Próximos 30 dias após preenchimento manual da data inicial.
