@@ -1,0 +1,33 @@
+# Project TODO
+
+- [x] Configurar credenciais protegidas do Supabase para as tabelas USER_PERF e AGENDA_REC.
+- [x] Implementar sessão própria no backend com login validado em USER_PERF.
+- [x] Restringir rotas e procedimentos para nível 1 e nível 2 conforme a matriz de acesso.
+- [x] Criar tela de login elegante com feedback de validação e encerramento de sessão.
+- [x] Criar layout responsivo com sidebar, menu Bases, menu Recebimento e navegação por permissão.
+- [x] Implementar tema claro/escuro persistido para o usuário logado.
+- [x] Implementar listagem, criação e edição de usuários em USER_PERF, exclusivos do nível 1.
+- [x] Implementar alteração da própria senha para qualquer usuário autenticado.
+- [x] Instalar e integrar leitor de arquivos Excel para upload de planilhas .xlsx e .xls.
+- [x] Processar exclusivamente a aba Agendas, descartar as seis primeiras linhas e filtrar a coluna A pelo valor 910.
+- [x] Mapear D, E, F, I, K, L, M, N, R, S, U, X e AL para os campos especificados de AGENDA_REC.
+- [x] Criar pré-visualização, validação de dados e confirmação antes de gravar a programação de agenda no Supabase.
+- [x] Enviar registros processados ao Supabase em lotes controlados e exibir resultado detalhado da importação.
+- [x] Consultar dados de AGENDA_REC para construir os indicadores e gráficos de recebimento.
+- [x] Criar dashboard de veículos por dia, categoria, hora, dia da semana e turno.
+- [x] Criar dashboard de paletes por hora, turno, dia e categoria.
+- [x] Criar visão de ruptura com itens e veículos em ruptura por dia.
+- [x] Escrever testes automatizados para autenticação, autorização, transformação da planilha e agregações analíticas.
+- [x] Verificar interface em desktop e mobile, testar fluxos críticos e criar a versão final do projeto.
+- [x] Adicionar utilitário de servidor para consumir as credenciais do Supabase com segurança.
+- [x] Validar em teste automatizado o acesso às tabelas USER_PERF e AGENDA_REC com a chave de serviço.
+- [x] Implementar no frontend o upload de arquivos .xlsx e .xls com uso efetivo da biblioteca xlsx.
+- [x] Adicionar testes que comprovem o parsing da planilha com a biblioteca integrada.
+- [x] Criar no sidebar uma seção Bases contendo a entrada Programação de Agenda, mantendo também o menu de Recebimento com navegação por nível.
+- [x] Persistir a preferência de tema por usuário autenticado e restaurá-la no login.
+- [x] Exibir um resumo detalhado pós-importação com totais de linhas analisadas, válidas, ignoradas pelo filtro 910, inválidas e efetivamente inseridas no Supabase.
+- [x] Retornar e apresentar na UI um relatório estruturado do upload por lote, incluindo falhas e registros rejeitados quando houver erro de gravação.
+- [x] Adicionar testes automatizados de login válido, login inválido e sessão própria.
+- [x] Verificar visualmente as telas autenticadas de dashboard, agenda e usuários em desktop e mobile.
+- [x] Validar os fluxos críticos com usuário válido, incluindo login, senha, usuários, importação e atualização do dashboard.
+- [x] Salvar checkpoint final após a validação completa.
