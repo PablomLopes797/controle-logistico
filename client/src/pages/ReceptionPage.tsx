@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AgendaImportPreview, parseAgendaFile } from "@/lib/agendaImport";
+import { finalizeImport } from "@/lib/importFeedback";
 import { trpc } from "@/lib/trpc";
 import ReceptionDashboard from "@/components/ReceptionDashboard";
 import {
@@ -134,9 +135,12 @@ function AgendaImportPanel() {
       status: rejected ? "partial" : "success",
       batches,
     });
-    await utils.logistics.reception.dashboard.invalidate();
-    if (rejected) toast.error(`${inserted} registros inseridos e ${rejected} rejeitado(s). Consulte o relatório.`);
-    else toast.success(`${inserted} registros foram enviados ao Supabase.`);
+    const completion = await finalizeImport(inserted, rejected, () => utils.logistics.reception.dashboard.invalidate());
+    if (completion.feedback.variant === "success") toast.success(completion.feedback.message);
+    else toast.warning(completion.feedback.message);
+    if (!completion.dashboardUpdated) {
+      toast.warning("A importação foi concluída, mas os indicadores não foram atualizados automaticamente. Atualize o dashboard quando puder.");
+    }
     setPreview(null);
     setFileName("");
   }

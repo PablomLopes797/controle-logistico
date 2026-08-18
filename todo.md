@@ -31,3 +31,13 @@
 - [x] Verificar visualmente as telas autenticadas de dashboard, agenda e usuários em desktop e mobile.
 - [x] Validar os fluxos críticos com usuário válido, incluindo login, senha, usuários, importação e atualização do dashboard.
 - [x] Salvar checkpoint final após a validação completa.
+- [x] Diagnosticar o erro exibido após registros serem inseridos com sucesso no Supabase.
+- [x] Corrigir a mensagem de importação para separar sucesso de gravação e falha de atualização dos indicadores.
+- [x] Consolidar o código da interface em um único arquivo HTML, mantendo as credenciais e operações sensíveis no backend.
+- [x] Testar a importação e a versão HTML consolidada antes de salvar a nova versão.
+- [x] Adicionar teste integrado do procedimento de importação, incluindo confirmação de gravação e atualização do dashboard.
+- [x] Tratar separadamente a gravação no Supabase e uma eventual falha de atualização do dashboard na interface.
+- [x] Cobrir em teste o sucesso da gravação mesmo quando a atualização dos indicadores falhar.
+- [x] Cobrir o fluxo encadeado de importação seguida de atualização do dashboard.
+- [x] Registrar evidência automatizada de que o HTML consolidado contém a interface de importação e seu fluxo de confirmação.
+- [x] Extrair e testar a etapa pós-importação quando a atualização do dashboard falhar.

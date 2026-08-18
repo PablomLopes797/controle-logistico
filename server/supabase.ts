@@ -77,6 +77,13 @@ function responseHeaders(includeJson = false) {
   };
 }
 
+export async function readSupabaseResponse<T>(response: Response): Promise<T> {
+  if (response.status === 204) return undefined as T;
+  const body = await response.text();
+  if (!body.trim()) return undefined as T;
+  return JSON.parse(body) as T;
+}
+
 async function requestSupabase<T>(
   path: string,
   init: RequestInit = {},
@@ -95,8 +102,7 @@ async function requestSupabase<T>(
     throw new Error(`Falha na integração com o Supabase (${response.status}): ${details}`);
   }
 
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return readSupabaseResponse<T>(response);
 }
 
 function encodeFilter(value: string) {
